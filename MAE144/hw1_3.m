@@ -10,11 +10,11 @@ Ds = RR_tf([1 z1],[1 p1 0])
 Dsm = tf([1 1],[1 10 0])
 
 disp("Eric's C2D_matched:")
-EL_C2D_matched(Ds,0.01,0.001)
+EL_C2D_matched(Ds,0.01,true,0.001)
 disp("MATLAB's C2D_matched:")
 c2d(Dsm,0.01,'matched')
 
-function [Dz]= EL_C2D_matched(Ds,h,omega_bar)
+function [Dz]= EL_C2D_matched(Ds,h,strictly_causal,omega_bar)
     
     %map poles from s to z
     rd=RR_roots(Ds.den);
@@ -33,16 +33,24 @@ function [Dz]= EL_C2D_matched(Ds,h,omega_bar)
     end
 
     %map infinite zeros
-    if length(rd)>length(n)+1
-        for j = length(n)+1:length(z)-1
-            n(j) = -1;
+    if strictly_causal == true
+        if length(rd)>length(n)+1
+            for j = length(n)+1:length(z)-1
+                n(j) = -1;
+            end
+        end
+    else
+        if length(rd)>=length(n)+1
+            for j = length(n)+1:length(z)
+                n(j) = -1;
+            end
         end
     end
 
     Dz = RR_tf(n,z,1);
 
     %match gain
-    if nargin==2
+    if nargin==3
         if RR_evaluate(Ds.den,0) == 0
             disp("error: omega_bar just be nonzero!")
             Dz = NaN;
